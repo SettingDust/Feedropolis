@@ -20,6 +20,9 @@ WORKDIR /usr/src/app
 RUN --mount=type=cache,target=/root/.npm \
     npm install -g pnpm@${PNPM_VERSION}
 
+# Install git
+RUN apk add --no-cache git
+
 ################################################################################
 # Create a stage for installing production dependecies.
 FROM base as deps
