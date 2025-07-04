@@ -67,6 +67,7 @@ COPY package.json .
 # the built application from the build stage into the image.
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/bin ./bin
 
 COPY --from=build /app/ui/dist ./ui/dist
 
