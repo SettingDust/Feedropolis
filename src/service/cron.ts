@@ -1,8 +1,9 @@
 import * as FeedRepo from '../repository/feed.js';
 import * as FeedItemRepo from '../repository/feed-items.js';
-import { generateFeedFromSettings } from './feed.js';
+import {generateFeedFromSettings} from './feed.js';
 import Debug from 'debug';
-import { FeedModel as Feed } from '../util/types.js'
+import {FeedModel, FeedModel as Feed} from '../util/types.js'
+
 const debug = Debug('ap:cron');
 
 const baseInterval = (parseInt(process.env.CRON_BASE) || 50) * 1000;
@@ -41,10 +42,7 @@ let backoffIntervals = [
 ];
 const maxErrorCount = 3;
 
-export async function fetchNextFeed() {
-	let feedSettings = await FeedRepo.getNextFeedInQueue();
-	if (!feedSettings) return;
-	debug('cron check', feedSettings);
+export async function fetchFeed(feedSettings: FeedModel) {
 	feedSettings.lastcheck = new Date();
 	try {
 		let feed = await generateFeedFromSettings(feedSettings);
@@ -59,9 +57,9 @@ export async function fetchNextFeed() {
 	} catch (e) {
 		console.log(e);
 		updateNextCheck(feedSettings, true);
-		if (!feedSettings.log) feedSettings.log = { errors: [] };
+		if (!feedSettings.log) feedSettings.log = {errors: []};
 		if (!Array.isArray(feedSettings.log.errors)) feedSettings.log.errors = [];
-		feedSettings.log.errors.push({ message: e.message, stack: e.stack });
+		feedSettings.log.errors.push({message: e.message, stack: e.stack});
 		if (feedSettings.errorcount > maxErrorCount) {
 			feedSettings.nextcheck = null;
 		}
@@ -71,6 +69,13 @@ export async function fetchNextFeed() {
 		}
 	}
 	await FeedRepo.updateFeed(feedSettings);
+}
+
+export async function fetchNextFeed() {
+	let feedSettings = await FeedRepo.getNextFeedInQueue();
+	if (!feedSettings) return;
+	debug('cron check', feedSettings);
+	await fetchFeed(feedSettings);
 }
 
 function createErrorItem(err: Error, feedSettings: Feed) {

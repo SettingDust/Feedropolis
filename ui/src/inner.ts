@@ -41,11 +41,14 @@ document.addEventListener('click', e => {
 }, false);
 
 window.addEventListener('message', (msg) => {
+	if (typeof msg.data !== 'string') return;
 	console.debug('message.inner', msg.data);
-	parent.handleRequest(JSON.parse(msg.data))
+	const data = JSON.parse(msg.data)
+	parent.handleRequest(data)
 }, false);
 
 function countLinks({ entry, link }: { entry: string, link: string }) {
+	console.debug('message.inner', entry)
 	let res = document.evaluate(entry, document);
 	let set = new Set();
 	let elem;

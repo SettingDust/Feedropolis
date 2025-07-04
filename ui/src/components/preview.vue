@@ -15,7 +15,8 @@
 	</form>
 </template>
 <script lang="ts">
-import { ajax, EventHub } from '../service/util.js';
+import {ajax, EventHub} from '@/service/util';
+
 export default {
 	name: 'Preview',
 	data() {

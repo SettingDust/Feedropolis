@@ -1,8 +1,7 @@
 import Router from 'koa-better-router';
 import getFilteredHtml from '../service/getfilteredhtml.js';
-import { generateFeedFromSettings, getHtml, getDom, extractSitedata } from '../service/feed.js';
-import { XMLSerializer } from 'xmldom';
-import { FeedModel } from '../util/types.js';
+import {extractSitedata, generateFeedFromSettings, getDom, getHtml} from '../service/feed.js';
+import {FeedModel} from '../util/types.js';
 
 const router = Router({
 	prefix: '/api/main'
@@ -23,8 +22,8 @@ router.addRoute('POST /load-page', async (ctx) => {
 		inlineScripts: [ injectScript ]
 	});
 	let dom = getDom(html);
-	let siteData = extractSitedata(dom, html, { url: data.url });
-	html = new XMLSerializer().serializeToString(dom);
+	let siteData = extractSitedata(dom, { url: data.url });
+	html = dom.toString();
 	ctx.session.loadedPage = html;
 	ctx.json = { ok: true, length: html.length, title: siteData.title, description: siteData.description  }
 })

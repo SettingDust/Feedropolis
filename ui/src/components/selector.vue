@@ -119,9 +119,9 @@
 	</div>
 </template>
 <script lang="ts">
-import type { PropType } from 'vue';
-import { EventHub, sendEvent, send, ajax } from '../service/util.js';
-import type { Feed } from '../types.js';
+import type {PropType} from 'vue';
+import {ajax, EventHub, send, sendEvent} from '../service/util.js';
+import type {Feed} from '../types.js';
 
 export default {
 	name: 'Selector',
@@ -235,6 +235,7 @@ export default {
 			absolute = parts.join('/');
 			let found = await send('highlight', absolute);
 			if (absolute === this.pathEntry) this.found = found;
+			await this.updateFoundLinks();
 		},
 		async selected(data) {
 			sendEvent('selectionToggle', { enabled: false });

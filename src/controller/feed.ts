@@ -1,14 +1,18 @@
 import Router from 'koa-better-router';
 import crypto from 'node:crypto';
 import * as FeedRepo from '../repository/feed.js'
-import type { FeedModel } from '../util/types.js';
+import type {FeedModel} from '../util/types.js';
+import {fetchFeed} from "../service/cron.js";
 
 const router = Router({
 	prefix: '/api/feed'
 });
 
 router.addRoute('POST /create', async (ctx) => {
-	let data = ctx.request.body;
+	let data: {
+		title: string,
+		description: string
+	} = ctx.request.body;
 	const mgmtKey = ctx.query.mgmtKey;
 	const isPubInstance = !!process.env.PUB_INSTANCE
 	let e = {
@@ -27,10 +31,10 @@ router.addRoute('POST /create', async (ctx) => {
 		managementkey: isPubInstance ? mgmtKey : ''
 	}
 	if (e.title.length > 255) {
-		e.title = e.title.substr(0, 255);
+		e.title = e.title.slice(0, 255);
 	}
 	if (e.description && e.description.length > 255) {
-		e.description = e.description.substr(0, 255);
+		e.description = e.description.slice(0, 255);
 	}
 	let res = await FeedRepo.createFeed(e);
 	ctx.session.url = null;
@@ -72,7 +76,7 @@ router.addRoute('POST /save', async (ctx) => {
 	let data = ctx.request.body;
 	const mgmtKey = ctx.query.mgmtKey;
 	let feed = await FeedRepo.getById(data.uid);
-	if (!assertValidManagementKey(mgmtKey, feed)) {
+	if (!await assertValidManagementKey(mgmtKey, feed)) {
 		ctx.response.status = 400;
 		ctx.json = { error: 'invalid management key' };
 		return;
@@ -88,14 +92,29 @@ router.addRoute('POST /refreshsecret', async (ctx) => {
 	let data = ctx.request.body;
 	const mgmtKey = ctx.query.mgmtKey;
 	let feed = await FeedRepo.getById(data.uid);
-	if (!assertValidManagementKey(mgmtKey, feed)) {
-		ctx.response.status = 400;
-		ctx.json = { error: 'invalid management key' };
-		return;
-	}
+	// if (!assertValidManagementKey(mgmtKey, feed)) {
+	// 	ctx.response.status = 400;
+	// 	ctx.json = { error: 'invalid management key' };
+	// 	return;
+	// }
 	feed.secret = crypto.randomBytes(8).toString('hex'),
 	await FeedRepo.updateFeed(feed);
 	return feed;
+});
+
+router.addRoute('POST /refresh', async (ctx) => {
+	let data: {
+		uid: number
+	} = ctx.request.body;
+	const mgmtKey = ctx.query.mgmtKey;
+	let feed = await FeedRepo.getById(data.uid);
+	// if (!await assertValidManagementKey(mgmtKey, feed)) {
+	// 	ctx.response.status = 400;
+	// 	ctx.json = { error: 'invalid management key' };
+	// 	return;
+	// }
+	await fetchFeed(feed)
+	ctx.json = feed;
 });
 
 async function assertValidManagementKey(key: string, feed: FeedModel): Promise<boolean> {

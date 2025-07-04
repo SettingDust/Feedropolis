@@ -1,12 +1,13 @@
-import { DOMParser } from 'xmldom'
-import select from 'xpath.js'
+import * as xpath from 'xpath'
 import nightmareFetcher from './nightmare.js';
 import simpleFetcher from './fetch.js';
-import { Feed } from 'feed';
+import {Feed} from 'feed';
 import Debug from 'debug';
-import { URL } from 'node:url';
+import {URL} from 'node:url';
 import getFilteredHtml from './getfilteredhtml.js';
-import { FeedItem, SiteData, FeedModel, FeedLoadParams, FeedSelector } from '../util/types.js';
+import {FeedItem, FeedLoadParams, FeedModel, FeedSelector, SiteData} from '../util/types.js';
+import {parseHTML} from "linkedom";
+
 const debug = Debug('ap:feed');
 
 
@@ -15,30 +16,30 @@ export async function generateFeedFromSettings(settings: FeedModel) {
 	let html = await getHtml(settings.loadparams);
 	html = await getFilteredHtml({ input: html, baseUrl: settings.url });
 	debug('html filtered size', html.length);
-	let doc = await getDom(html);
-	// debug('dom', doc);
+	let doc = getDom(html);
+	debug('dom', doc);
 	let feedData = extractDataXpath(doc, settings.selectors);
 	debug('feedData', feedData);
-	let siteData = extractSitedata(doc, html, settings);
+	let siteData = extractSitedata(doc, settings);
 	feedData = sanitizeFeedData(feedData, siteData);
 	let feed = createFeed(settings, feedData);
 	debug('feed', feed);
 	return feed;
 }
 
-export function extractSitedata(doc: DOMParser, html: string, settings: { url: string }): SiteData {
+export function extractSitedata(doc: Document, settings: { url: string }): SiteData {
 	let res = {
 		title: '',
 		description: '',
 		url: settings.url
 	};
 
-	let titleElem = select(doc, '//title/text()');
-	if (!titleElem.length) titleElem = select(doc, '//h1/text()');
-	if (titleElem.length) res.title = titleElem[0].data.trim();
+	let titleElem = xpath.select('//title/text()', doc);
+	if (Array.isArray(titleElem) && !titleElem.length) titleElem = xpath.select('//h1/text()', doc);
+	if (Array.isArray(titleElem) && titleElem.length) res.title = titleElem[0].textContent.trim();
 
-	let descElem = select(doc, '//meta[@name="description"]/@content')
-	if (descElem.length) res.description = descElem[0].value.trim();
+	let descElem = xpath.select('//meta[@name="description"]/@content', doc)
+	if (Array.isArray(descElem) && descElem.length) res.description = descElem[0].textContent.trim();
 
 	if (!res.title) {
 		let u = new URL(settings.url);
@@ -74,21 +75,9 @@ function sanitizeFeedData(feedData: FeedItem[], siteData: SiteData): FeedItem[] 
 	}).filter(e => !!e)
 }
 
-export function getDom(html: string): DOMParser {
+export function getDom(html: string): Document {
 	// debug('html', html);
-	return new DOMParser({
-		errorHandler: {
-			warning(w) {
-				debug('xml-warning', w);
-			},
-			error(e) {
-				debug('xml-error', e);
-			},
-			fatalError(e) {
-				throw new Error(e)
-			}
-		}
-	}).parseFromString(html, 'text/html');
+	return parseHTML(html).document;
 }
 
 export async function getHtml(loadParams: FeedLoadParams): Promise<string> {
@@ -102,19 +91,25 @@ export async function getHtml(loadParams: FeedLoadParams): Promise<string> {
 	return html;
 }
 
-export function extractDataXpath(doc: DOMParser, settings: FeedSelector): FeedItem[] {
+export function extractDataXpath(doc: Document, settings: FeedSelector): FeedItem[] {
 	let data = [];
-	let entries = select(doc, settings.pathEntry);
-	debug('entries', entries.length);
+	let entries = xpath.select(settings.pathEntry, doc);
+	if (!Array.isArray(entries)) {
+		if (typeof entries !== 'object') {
+			throw new Error('no entries found');
+		}
+		entries = [entries];
+	}
+	debug('entries', entries["length"] ?? 1);
 	entries.forEach(entry => {
 		// debug('entry', entry);
-		let titleElem = select(entry, settings.pathTitle);
+		let titleElem = xpath.select(settings.pathTitle, entry);
 		let title = getValue(titleElem);
 		if (!title) {
 			debug('no title found', titleElem);
 			return;
 		}
-		let linkElem = select(entry, settings.pathLink);
+		let linkElem = xpath.select(settings.pathLink, entry);
 		let link = getValue(linkElem);
 		if (!link) {
 			debug('no link found', linkElem);
@@ -122,12 +117,12 @@ export function extractDataXpath(doc: DOMParser, settings: FeedSelector): FeedIt
 		}
 		let description;
 		if (settings.pathDescription) {
-			let descriptionElem = select(entry, settings.pathDescription);
+			let descriptionElem = xpath.select(settings.pathDescription, entry);
 			description = getValue(descriptionElem);
 		}
 		let image;
 		if (settings.pathImage) {
-			let imageElem = select(entry, settings.pathImage);
+			let imageElem = xpath.select(settings.pathImage, entry);
 			image = getValue(imageElem);
 		}
 		data.push({
@@ -137,11 +132,12 @@ export function extractDataXpath(doc: DOMParser, settings: FeedSelector): FeedIt
 			description
 		});
 	});
-	function getValue(e) {
-		if (e.length === 0) return null;
-		if (e[0].value) return e[0].value;
-		if (e[0].data) return e[0].data;
-		return null;
+	function getValue(e: xpath.SelectReturnType) {
+		if (Array.isArray(e)) {
+			if (!e.length) return null;
+			return e[0].textContent;
+		}
+		return e;
 	}
 	return data;
 }

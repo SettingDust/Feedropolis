@@ -89,9 +89,10 @@
 	</form>
 </template>
 <script lang="ts">
-import type { PropType } from 'vue';
-import { ajax, EventHub } from '../service/util.js';
-import type { Feed } from '@/types';
+import type {PropType} from 'vue';
+import {ajax, EventHub} from '@/service/util';
+import type {Feed} from '@/types';
+
 export default {
 	name: 'Loader',
 	props: {
@@ -174,6 +175,8 @@ export default {
 				}
 				EventHub.emit('pageInfo', res);
 				this.$emit('next');
+			}).catch((it) => {
+				this.loading = false
 			});
 		},
 		parseHeaders() {

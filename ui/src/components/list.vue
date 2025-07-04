@@ -99,6 +99,7 @@
 					</td>
 					<td>
 						<button class="pure-button" @click.prevent="editFeed(item)">Edit</button>
+						<button class="pure-button" @click.prevent="refreshFeed(item)">Refresh</button>
 					</td>
 				</tr>
 			</tbody>
@@ -107,9 +108,9 @@
 	</div>
 </template>
 <script lang="ts">
-import type { PropType } from 'vue';
-import { ajax, EventHub } from '../service/util.js';
-import type { Feed } from '@/types';
+import type {PropType} from 'vue';
+import {ajax} from '@/service/util';
+import type {Feed} from '@/types';
 
 export default {
 	name: 'FeedList',
@@ -157,6 +158,9 @@ export default {
 				inserterrorsasitems: item.inserterrorsasitems,
 				noitemsiserror: item.noitemsiserror
 			};
+		},
+		refreshFeed(item) {
+			ajax('/api/feed/refresh', { uid: item.uid });
 		},
 		async refreshSecret() {
 			let data = await ajax('/api/feed/refreshsecret', { uid: this.edit!.uid });

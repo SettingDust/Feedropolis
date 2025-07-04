@@ -1,6 +1,6 @@
 import RRM from './rrm'
 import EventEmitter from 'eventemitter3';
-import { getKey } from './local-key';
+import {getKey} from './local-key';
 
 export const EventHub = new EventEmitter();
 
@@ -20,11 +20,11 @@ inner.setHandler('selected', (data: any) => {
 })
 
 window.addEventListener('message', (msg) => {
-	console.debug('message.outer', msg.data);
 	if (typeof msg.data !== 'string') return;
+	console.debug('message.outer', msg.data);
+	const data = JSON.parse(msg.data)
 	try {
-		let action = JSON.parse(msg.data)
-		inner.handleRequest(action)
+		inner.handleRequest(data)
 	} catch (e) {
 		console.debug(e);
 	}

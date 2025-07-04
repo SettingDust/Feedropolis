@@ -1,10 +1,11 @@
 import Debug from 'debug';
+import {exec} from 'child_process';
+
 const debug = Debug('ap:db');
-import { exec } from 'child_process';
 
 export function waitForDatabase(dbUri): Promise<void> {
 	return new Promise(function(resolve, reject) {
-		let cmd = `bash -c 'while !</dev/tcp/${dbUri.hostname}/${dbUri.port}; do sleep 1; done;'`;
+		let cmd = `wait-on tcp:${dbUri.hostname}:${dbUri.port}`;
 		debug(cmd);
 		let p = exec(cmd, {}, (err) => {
 			if (err) reject(err);
@@ -20,7 +21,7 @@ export function waitForDatabase(dbUri): Promise<void> {
 
 export function runMigrations(dbUri): Promise<void> {
 	return new Promise(function(resolve, reject) {
-		let cmd = `node_modules/.bin/knex --migrations-directory migrations --client pg --connection ${dbUri.href} migrate:latest`;
+		let cmd = `knex --migrations-directory migrations --client pg --connection ${dbUri.href} migrate:latest`;
 		debug(cmd);
 		let p = exec(cmd, {}, (err) => {
 			if (err) reject(err);
