@@ -1,19 +1,37 @@
-version: '3.4'
-
 services:
-
-  app:
-    image: docker.io/stormworks/feedropolis
-    ports:
-      - 3000:3000
-    privileged: true
+  server:
+    build:
+      context: .
     environment:
-      - DATABASE_URL=postgres://test:test@db:5432/test
-      - BASE_URL=http://localhost:3000
-      - DEBUG=
+      NODE_ENV: production
+      DATABASE_URL: postgres://test:test@db:5432/test
+      BASE_URL: http://localhost:3000
+      DEBUG:
+    ports:
+      - "3000:3000"
+    privileged: true
+    depends_on:
+      db:
+        condition: service_healthy
 
   db:
-    image: docker.io/library/postgres:12
+    image: postgres
+    restart: always
+    user: postgres
+    secrets:
+      - db-password
+    volumes:
+      - db-data:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=test
       - POSTGRES_PASSWORD=test
+    expose:
+      - 5432
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db-data:
