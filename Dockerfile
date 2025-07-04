@@ -13,15 +13,15 @@ ARG PNPM_VERSION=10.12.4
 # Use node image for base image for all stages.
 FROM node:${NODE_VERSION}-alpine AS base
 
-# Set working directory for all build stages.
-WORKDIR /usr/src/app
-
 # Install pnpm.
 RUN --mount=type=cache,target=/root/.npm \
     npm install -g pnpm@${PNPM_VERSION}
 
 # Install git
 RUN apk add --no-cache git
+
+COPY . /app
+WORKDIR /app
 
 ################################################################################
 # Create a stage for installing production dependecies.
@@ -31,18 +31,11 @@ FROM base AS deps
 # Leverage a cache mount to /root/.local/share/pnpm/store to speed up subsequent builds.
 # Leverage bind mounts to package.json and pnpm-lock.yaml to avoid having to copy them
 # into this layer.
-RUN --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=pnpm-lock.yaml,target=pnpm-lock.yaml \
-    --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --prod --frozen-lockfile
+WORKDIR /app/ui
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
 
-WORKDIR /usr/src/app/ui
-RUN --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=pnpm-lock.yaml,target=pnpm-lock.yaml \
-    --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --prod --frozen-lockfile
-
-WORKDIR /usr/src/app
+WORKDIR /app
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
 
 ################################################################################
 # Create a stage for building the application.
@@ -50,27 +43,20 @@ FROM deps AS build
 
 # Download additional development dependencies before building, as some projects require
 # "devDependencies" to be installed to build. If you don't need this, remove this step.
-RUN --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=pnpm-lock.yaml,target=pnpm-lock.yaml \
-    --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
+WORKDIR /app/ui
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
-WORKDIR /usr/src/app/ui
-RUN --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=pnpm-lock.yaml,target=pnpm-lock.yaml \
-    --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
-
-WORKDIR /usr/src/app
+WORKDIR /app
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # Copy the rest of the source files into the image.
 COPY . .
 # Run the build script.
-WORKDIR /usr/src/app/ui
+WORKDIR /app/ui
 RUN pnpm run build-only && pnpm run build:inner
 RUN rm -rf node_modules src public
 
-WORKDIR /usr/src/app
+WORKDIR /app
 RUN pnpm run build
 
 ################################################################################
@@ -89,8 +75,10 @@ COPY package.json .
 
 # Copy the production dependencies from the deps stage and also
 # the built application from the build stage into the image.
-COPY --from=deps /usr/src/app/node_modules ./node_modules
-COPY --from=build /usr/src/app/dist ./dist
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+
+COPY --from=build /app/ui/dist ./ui/dist
 
 
 # Expose the port that the application listens on.
