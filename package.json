@@ -41,11 +41,5 @@
 		"ts-node": "^10.9.1",
 		"tsx": "^4.1.4",
 		"typescript": "^5.2.2"
-	},
-	"pnpm": {
-		"onlyBuiltDependencies": [
-			"esbuild",
-			"electron"
-		]
 	}
 }
