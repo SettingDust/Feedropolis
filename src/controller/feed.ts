@@ -76,11 +76,11 @@ router.addRoute('POST /save', async (ctx) => {
 	let data = ctx.request.body;
 	const mgmtKey = ctx.query.mgmtKey;
 	let feed = await FeedRepo.getById(data.uid);
-	if (!await assertValidManagementKey(mgmtKey, feed)) {
-		ctx.response.status = 400;
-		ctx.json = { error: 'invalid management key' };
-		return;
-	}
+	// if (!await assertValidManagementKey(mgmtKey, feed)) {
+	// 	ctx.response.status = 400;
+	// 	ctx.json = { error: 'invalid management key' };
+	// 	return;
+	// }
 	Object.keys(data).forEach(key => {
 		feed[key] = data[key];
 	});

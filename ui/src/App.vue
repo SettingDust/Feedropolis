@@ -22,7 +22,7 @@
 		</div>
 		<div id="accordion">
 			<article>
-				<input type="radio" name="accordion" id="acc_loader" value="1" v-model="accordion" />
+				<input type="radio" name="accordion" id="acc_loader" value="1" v-model="accordion" onclick="this.accordion = -1"/>
 				<label for="acc_loader">
 					Load target page
 				</label>
@@ -68,7 +68,7 @@ import Loader from './components/loader.vue';
 import Selector from './components/selector.vue';
 import Preview from './components/preview.vue';
 import List from './components/list.vue';
-import { ajax, EventHub } from './service/util.js';
+import {ajax, EventHub} from './service/util.js';
 
 export default {
 	name: 'App',
@@ -94,7 +94,6 @@ export default {
 	created() {
 		EventHub.on('requestError', e => {
 			this.error = e;
-			this.accordion = -1;
 		})
 		this.refreshFeeds();
 		EventHub.on('refreshFeeds', this.refreshFeeds.bind(this));

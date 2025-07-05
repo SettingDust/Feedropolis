@@ -10,7 +10,6 @@ import {parseHTML} from "linkedom";
 
 const debug = Debug('ap:feed');
 
-
 export async function generateFeedFromSettings(settings: FeedModel) {
 	debug('generateFeedFromSettings', settings);
 	let html = await getHtml(settings.loadparams);
