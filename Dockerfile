@@ -5,7 +5,7 @@ ARG PNPM_VERSION=10.12.4
 FROM node:${NODE_VERSION}-alpine AS base
 
 RUN --mount=type=cache,target=/root/.npm \
-    npm install -g pnpm@${PNPM_VERSION} \
+    npm install -g pnpm@${PNPM_VERSION}
 
 WORKDIR /app
 
