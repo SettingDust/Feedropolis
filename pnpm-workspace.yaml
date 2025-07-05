@@ -1,3 +1,10 @@
+packages:
+  - ui
+
+linkWorkspacePackages: true
+
 onlyBuiltDependencies:
-    - electron
-    - esbuild
+  - cypress
+  - electron
+  - esbuild
+  - vue-demi
