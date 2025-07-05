@@ -69,6 +69,7 @@ COPY package.json .
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/bin ./bin
+COPY --from=build /app/migrations ./migrations
 
 COPY --from=build /app/ui/dist ./ui/dist
 
