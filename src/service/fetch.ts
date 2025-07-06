@@ -1,9 +1,11 @@
 import Debug from "debug";
 import {FetchParams} from "../util/types.js";
-import {Dispatcher, request} from 'undici'
+import {Dispatcher, EnvHttpProxyAgent, request, setGlobalDispatcher} from 'undici'
 
 const debug = Debug('ap:fetch');
 const userAgent = process.env.USER_AGENT || 'Feedropolis RSS Generator';
+
+setGlobalDispatcher(new EnvHttpProxyAgent())
 
 export default async function (loadParams: FetchParams) {
 	debug('fetch ' + loadParams.url);

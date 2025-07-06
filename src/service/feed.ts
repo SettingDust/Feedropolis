@@ -83,7 +83,7 @@ export async function getHtml(loadParams: FeedLoadParams): Promise<string> {
 	let html;
 	debug('getHtml', loadParams);
 	if (loadParams.loadScripts) {
-		html = await nightmareFetcher(loadParams);
+		html = nightmareFetcher(loadParams);
 	} else {
 		html = await simpleFetcher(loadParams);
 	}

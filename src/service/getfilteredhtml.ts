@@ -1,8 +1,10 @@
 import * as cheerio from "cheerio";
 import Debug from "debug";
-import { URL } from "url";
+import {URL} from "url";
 import fetch from './fetch.js';
 import FS from 'fs/promises';
+import * as url from "node:url";
+
 const debug = Debug('ap:getfilteredhtml');
 
 
@@ -50,5 +52,14 @@ export default async function run({
 		}
 		$('body').append(`<script type="module">${content}</script>`)
 	}
+	$("a[href^='/'], img[src^='/']").each(function (this) {
+		const $this = $(this);
+		if ($this.attr("href")) {
+			$this.attr("href", url.resolve(baseUrl, $this.attr("href")));
+		}
+		if ($this.attr("src")) {
+			$this.attr("src", url.resolve(baseUrl, $this.attr("src")));
+		}
+	});
 	return $.html();
 }

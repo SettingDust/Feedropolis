@@ -56,6 +56,7 @@ export type FetchParams = {
 	url: string
 	body?: string,
 	headers?: Record<string,string>
+	userAgent?: string
 	cookies?: string
 	referrer?: string
 	waitTime?: number

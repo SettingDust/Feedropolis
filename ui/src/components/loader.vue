@@ -19,6 +19,12 @@
 			</div>
 			<div class="pure-control-group">
 				<label v-show="showMoreOptions">
+					User-Agents:
+					<input id="userAgent" type="text" name="userAgent" placeholder="Feedropolis RSS Generator" v-model="userAgent" style="width: 420px">
+				</label>
+			</div>
+			<div class="pure-control-group">
+				<label v-show="showMoreOptions">
 					Request Body:
 					<input type="text" name="body" v-model="body" style="width: 420px">
 				</label>
@@ -106,6 +112,7 @@ export default {
 			copyFromVal: null,
 			url: '',
 			cookies: '',
+			userAgent: '',
 			body: '',
 			headers: '',
 			loadScripts: false,
@@ -161,6 +168,7 @@ export default {
 			ajax('api/main/load-page', {
 				url: this.url,
 				cookies: this.cookies,
+				userAgent: this.userAgent,
 				body: this.body,
 				headers: this.parseHeaders(),
 				loadScripts: this.loadScripts,

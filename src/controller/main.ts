@@ -1,7 +1,7 @@
 import Router from 'koa-better-router';
 import getFilteredHtml from '../service/getfilteredhtml.js';
 import {extractSitedata, generateFeedFromSettings, getDom, getHtml} from '../service/feed.js';
-import {FeedModel} from '../util/types.js';
+import {FeedLoadParams, FeedModel, FetchParams} from '../util/types.js';
 
 const router = Router({
 	prefix: '/api/main'
@@ -11,7 +11,7 @@ const injectScript = './ui/dist/inner.js';
 
 router.addRoute('POST /load-page', async (ctx) => {
 	// console.log('load-page', ctx.request.body);
-	let data = ctx.request.body;
+	let data: FeedLoadParams & FetchParams = ctx.request.body;
 	ctx.session.url = data.url;
 	ctx.session.loadParams = data;
 	let html = await getHtml(data);
